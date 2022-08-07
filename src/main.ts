@@ -1,11 +1,14 @@
-// function Autobind(_: any, __: string, descriptor: PropertyDescriptor) {
-//   return {
-//     get() {
-//       return descriptor.value.bind(this);
-//     },
-//   };
-// }
+// Autobind Decorator (接受函式陳述式或函式表達式)
+function Autobind(_: any, __: string, descriptor: PropertyDescriptor) {
+  return {
+    configurable: true,
+    get() {
+      return descriptor.value.bind(this);
+    },
+  };
+}
 
+// ProjectInput Class
 class ProjectInput {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
@@ -41,7 +44,7 @@ class ProjectInput {
     this.attach();
   }
 
-  // @Autobind
+  @Autobind
   private submitHandler(e: Event) {
     e.preventDefault();
 
@@ -52,7 +55,7 @@ class ProjectInput {
     /**
      * 偵聽器的回調將使 this 指向偵聽元素，可透過手動 bind 或裝飾器自動 bind 來解決問題
      */
-    this.element.addEventListener('submit', this.submitHandler.bind(this));
+    this.element.addEventListener('submit', this.submitHandler);
   }
 
   private attach() {
