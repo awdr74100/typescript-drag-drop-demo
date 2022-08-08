@@ -1,3 +1,51 @@
+// Validation
+interface Validatable {
+  value: string | number;
+  required?: boolean; // 也可寫為 required: boolean | undefined (就為問號的實際表示)
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+
+function validate(validatableInput: Validatable) {
+  if (
+    validatableInput.required &&
+    (Number.isNaN(validatableInput.value) || !validatableInput.value.toString().trim())
+  )
+    return false;
+
+  if (
+    typeof validatableInput.minLength === 'number' &&
+    typeof validatableInput.value === 'string' &&
+    validatableInput.value.length < validatableInput.minLength
+  )
+    return false;
+
+  if (
+    typeof validatableInput.maxLength === 'number' &&
+    typeof validatableInput.value === 'string' &&
+    validatableInput.value.length > validatableInput.maxLength
+  )
+    return false;
+
+  if (
+    typeof validatableInput.min === 'number' &&
+    typeof validatableInput.value === 'number' &&
+    validatableInput.value < validatableInput.min
+  )
+    return false;
+
+  if (
+    typeof validatableInput.max === 'number' &&
+    typeof validatableInput.value === 'number' &&
+    validatableInput.value > validatableInput.max
+  )
+    return false;
+
+  return true;
+}
+
 // Autobind Decorator (接受函式陳述式或函式表達式)
 function Autobind(_: any, __: string, descriptor: PropertyDescriptor) {
   return {
@@ -52,10 +100,26 @@ class ProjectInput {
     const enteredDescription = this.descriptionInputElement.value;
     const enteredPeople = this.peopleInputElement.value;
 
+    const titleValidatable: Validatable = {
+      value: enteredTitle,
+      required: true,
+    };
+    const descriptionValidatable: Validatable = {
+      value: enteredDescription,
+      required: true,
+      minLength: 5,
+    };
+    const peopleValidatable: Validatable = {
+      value: parseInt(enteredPeople, 10),
+      required: true,
+      min: 1,
+      max: 5,
+    };
+
     if (
-      !enteredTitle.trim().length ||
-      !enteredDescription.trim().length ||
-      !enteredPeople.trim().length
+      !validate(titleValidatable) ||
+      !validate(descriptionValidatable) ||
+      !validate(peopleValidatable)
     ) {
       alert('Invalid input, please try again!');
       return;
