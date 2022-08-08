@@ -44,11 +44,48 @@ class ProjectInput {
     this.attach();
   }
 
+  private gatherUserInput(): [string, string, number] | void {
+    /**
+     * 從任何輸入元素中提取的 value 屬性都將是 string 類型的
+     */
+    const enteredTitle = this.titleInputElement.value;
+    const enteredDescription = this.descriptionInputElement.value;
+    const enteredPeople = this.peopleInputElement.value;
+
+    if (
+      !enteredTitle.trim().length ||
+      !enteredDescription.trim().length ||
+      !enteredPeople.trim().length
+    ) {
+      alert('Invalid input, please try again!');
+      return;
+    }
+
+    return [enteredTitle, enteredDescription, parseInt(enteredPeople, 10)];
+  }
+
+  private clearInputs() {
+    this.titleInputElement.value = '';
+    this.descriptionInputElement.value = '';
+    this.peopleInputElement.value = '';
+  }
+
   @Autobind
   private submitHandler(e: Event) {
     e.preventDefault();
 
-    console.log(this.titleInputElement.value);
+    /**
+     * 從運行時的角度來看，元組最終只是個陣列，可透過 Array.isArray() 來檢查
+     */
+    const userInput = this.gatherUserInput();
+
+    if (Array.isArray(userInput)) {
+      const [title, description, people] = userInput;
+
+      console.log([title, description, people]);
+
+      this.clearInputs();
+    }
   }
 
   private configure() {
