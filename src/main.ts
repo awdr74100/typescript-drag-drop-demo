@@ -1,3 +1,44 @@
+// Project State Management
+class ProjectState {
+  private listeners: any[] = [];
+  private projects: any[] = [];
+  private static instance: ProjectState;
+
+  private constructor() {}
+
+  public static getInstance() {
+    if (this.instance) return this.instance;
+
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  public addListener(listenerFunc: Function) {
+    this.listeners.push(listenerFunc);
+  }
+
+  public addProject(title: string, description: string, numOfPeople: number) {
+    this.projects.push({
+      id: Math.random().toString(), // 並非真正的唯一值 (使用庫生成最好)
+      title,
+      description,
+      people: numOfPeople,
+    });
+
+    this.listeners.forEach((listenerFunc) => {
+      listenerFunc([...this.projects]); // 傳送副本陣列而不是原始陣列 (避免傳址特性引發的潛在問題)
+    });
+  }
+}
+
+/**
+ * 全域實例: 為可在任何地方使用的實例常數 (通常類定義完後就馬上實例化)
+ * 單例模式: 為確保整個應用都使用同個實例的設計手段 (保證類始終只有一個實例即每次的調用都將返回同個實例)
+ * 使用目的: 本就只想提供唯一的全域狀態管理物件 (調用相同實例可使狀態始終同步)
+ */
+// const projectState = new ProjectState();
+const projectState = ProjectState.getInstance();
+
 // Validation
 interface Validatable {
   value: string | number;
@@ -61,6 +102,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   element: HTMLElement; // 可透過 HTMLElement 表示不存在元素類型 (屬於其他特定元素類型的基類)
+  assignedProjects: any[];
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.querySelector('#project-list')!;
@@ -70,8 +112,34 @@ class ProjectList {
     this.element = importedNode.firstElementChild as HTMLElement;
     this.element.id = `${this.type}-projects`;
 
+    /**
+     * 初始化字段: 所在 addListener 的回調並不會在建構函式立刻被調用，故不算初始化字段
+     * 初始化限制: 初始化予值的行為必須明確定義於建構函式，無法透過調用方法來初始化字段
+     */
+    this.assignedProjects = [];
+
+    /**
+     * 註冊偵聽器函式: 傳遞回調給 projectState 進行管理，也表示回調將由 projectState 主動調用才被觸發
+     * 觸發偵聽器回調: 由調用 projectState.addProject 方法間接調用回調 (同時接收已更新的項目列表)
+     */
+    projectState.addListener((projects: any[]) => {
+      this.assignedProjects = projects;
+      this.renderProjects();
+    });
+
     this.attach();
     this.renderContent();
+  }
+
+  private renderProjects() {
+    const listElement = document.querySelector(`#${this.type}-projects-list`) as HTMLUListElement;
+
+    this.assignedProjects.forEach((projectItem) => {
+      const listItemElement = document.createElement('li');
+      listItemElement.textContent = projectItem.title;
+
+      listElement.appendChild(listItemElement);
+    });
   }
 
   private renderContent() {
@@ -174,7 +242,12 @@ class ProjectInput {
     if (Array.isArray(userInput)) {
       const [title, description, people] = userInput;
 
-      console.log([title, description, people]);
+      /**
+       * 簡單實現加入項目: 直接查找 #active-projects-list 後加入/渲染新項目
+       * 物件導向加入項目: 在 ProjectList 類透過 addProject 方法加入/渲染新項目 (ProjectInput 類內部透過傳遞進來的 ProjectList 實例調用該方法)
+       * 狀態管理加入項目: 參考當前例子
+       */
+      projectState.addProject(title, description, people);
 
       this.clearInputs();
     }
