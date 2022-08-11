@@ -1,7 +1,26 @@
+// Project Status (Enum)
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+// Project Class (Type)
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus, // 當然也可使用聯合文字類型 (但由於此處不需要具備可讀故使用 enum 可能更加適合)
+  ) {}
+}
+
 // Project State Management
+type Listener = (items: Project[]) => void;
+
 class ProjectState {
-  private listeners: any[] = [];
-  private projects: any[] = [];
+  private listeners: Listener[] = [];
+  private projects: Project[] = []; // 陣列的每個項目為 Project 的實例 (class 相較 interface 除同樣可用來約束物件外，還可實例化物件)
   private static instance: ProjectState;
 
   private constructor() {}
@@ -13,17 +32,25 @@ class ProjectState {
     return this.instance;
   }
 
-  public addListener(listenerFunc: Function) {
+  public addListener(listenerFunc: Listener) {
     this.listeners.push(listenerFunc);
   }
 
   public addProject(title: string, description: string, numOfPeople: number) {
-    this.projects.push({
-      id: Math.random().toString(), // 並非真正的唯一值 (使用庫生成最好)
+    /**
+     * 物件實字 (Object Literal): 不具備初始類型約束 (僅後續使用可由類型推斷約束類型，初始設置不具備任何約束，打錯字也不會抱錯)
+     * 建構函式 (Constructor Function): 具備初始類型約束 (基於類所實例化物件的行為自然受到參數及類型的約束)
+     * 生成結果: 兩種建立方式就結果而言並無任何差別，最終都將生成物件
+     */
+    const project = new Project(
+      Math.random().toString(),
       title,
       description,
-      people: numOfPeople,
-    });
+      numOfPeople,
+      ProjectStatus.Active, // 每個新加入項目預設都屬於激活狀態
+    );
+
+    this.projects.push(project);
 
     this.listeners.forEach((listenerFunc) => {
       listenerFunc([...this.projects]); // 傳送副本陣列而不是原始陣列 (避免傳址特性引發的潛在問題)
@@ -102,7 +129,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement;
   element: HTMLElement; // 可透過 HTMLElement 表示不存在元素類型 (屬於其他特定元素類型的基類)
-  assignedProjects: any[];
+  assignedProjects: Project[];
 
   constructor(private type: 'active' | 'finished') {
     this.templateElement = document.querySelector('#project-list')!;
@@ -122,10 +149,13 @@ class ProjectList {
      * 註冊偵聽器函式: 傳遞回調給 projectState 進行管理，也表示回調將由 projectState 主動調用才被觸發
      * 觸發偵聽器回調: 由調用 projectState.addProject 方法間接調用回調 (同時接收已更新的項目列表)
      */
-    projectState.addListener((projects: any[]) => {
-      this.assignedProjects = projects;
-      this.renderProjects();
-    });
+    projectState.addListener(
+      // 此處回調函式參數實則無須定義類型 (將參考 addListener 方法中的函式參數中的參數類型)
+      (projects: Project[]) => {
+        this.assignedProjects = projects;
+        this.renderProjects();
+      },
+    );
 
     this.attach();
     this.renderContent();
