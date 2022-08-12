@@ -148,14 +148,17 @@ class ProjectList {
     /**
      * 註冊偵聽器函式: 傳遞回調給 projectState 進行管理，也表示回調將由 projectState 主動調用才被觸發
      * 觸發偵聽器回調: 由調用 projectState.addProject 方法間接調用回調 (同時接收已更新的項目列表)
+     * 偵聽器回調類型: 此處偵聽器回調中的參數實則不用定義類型 (將參考 addListener 方法中的函式類型參數中的已定義參數類型)
      */
-    projectState.addListener(
-      // 此處回調函式參數實則無須定義類型 (將參考 addListener 方法中的函式參數中的參數類型)
-      (projects: Project[]) => {
-        this.assignedProjects = projects;
-        this.renderProjects();
-      },
-    );
+    projectState.addListener((projects: Project[]) => {
+      const relevantProjects = projects.filter(({ status }) => {
+        return this.type === 'active'
+          ? status === ProjectStatus.Active
+          : status === ProjectStatus.Finished;
+      });
+      this.assignedProjects = relevantProjects;
+      this.renderProjects();
+    });
 
     this.attach();
     this.renderContent();
@@ -164,12 +167,17 @@ class ProjectList {
   private renderProjects() {
     const listElement = document.querySelector(`#${this.type}-projects-list`) as HTMLUListElement;
 
-    this.assignedProjects.forEach((projectItem) => {
+    const listItemElements = this.assignedProjects.map((projectItem) => {
       const listItemElement = document.createElement('li');
       listItemElement.textContent = projectItem.title;
-
-      listElement.appendChild(listItemElement);
+      return listItemElement;
     });
+
+    // 通常會使用 innerHTML 先清除舊有的所有內容後再進行渲染 (可確保舊有內容不會跟著被渲染)
+    // listElement.innerHTML = '';
+
+    // 更快速的取代所有子元素方法 (除 IE 外的瀏覽器都已支援)
+    listElement.replaceChildren(...listItemElements);
   }
 
   private renderContent() {
