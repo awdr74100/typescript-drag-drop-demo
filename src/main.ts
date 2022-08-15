@@ -176,6 +176,28 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   public abstract renderContent(): void; // 抽象修飾元無法與私有修飾元並用即抽象修飾元始終與公共修飾元並用 (公共抽象修飾元使子類必須存在該方法且只能是公共的)
 }
 
+// ProjectItem Class
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+  private project: Project;
+
+  constructor(hostElementId: string, project: Project) {
+    super('single-project', hostElementId, false, project.id);
+
+    this.project = project;
+
+    this.configure();
+    this.renderContent();
+  }
+
+  public configure() {}
+
+  public renderContent() {
+    this.element.querySelector('h2')!.textContent = this.project.title;
+    this.element.querySelector('h3')!.textContent = this.project.people.toString();
+    this.element.querySelector('p')!.textContent = this.project.description;
+  }
+}
+
 // ProjectList Class
 class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   assignedProjects: Project[];
@@ -214,20 +236,26 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   }
 
   private renderProjects() {
-    const listElement = document.querySelector(`#${this.type}-projects-list`) as HTMLUListElement;
+    this.element.querySelector(`#${this.type}-projects-list`)!.replaceChildren(); // 清除遺留元素 (確保每次都為全新渲染)
 
-    const listItemElements = this.assignedProjects.map((projectItem) => {
-      const listItemElement = document.createElement('li');
-      listItemElement.textContent = projectItem.title;
-      return listItemElement;
+    this.assignedProjects.forEach((projectItem) => {
+      new ProjectItem(`${this.type}-projects-list`, projectItem); // 實例化時就已依靠繼承的 Component 類進行生成 (載入模板內容) 及附加動作
     });
 
-    /**
-     * innerHTML: 一般較常使用 innerHTML 並將其設為空字串以清除元素底下的所有元素 (此指 listElement.innerHTML = '')
-     * replaceChildren: 除 IE 外的瀏覽器皆已支援的新快速清除/覆蓋方法 (不指定覆蓋對象將使其清除底下所有元素，指定覆蓋對象將使其覆蓋底下所有元素)
-     * 目的: 重新渲染的初始行為。意即先清除舊有內容再進行渲染 (確保舊有內容不會遺留於元素上)
-     */
-    listElement.replaceChildren(...listItemElements);
+    // const listElement = document.querySelector(`#${this.type}-projects-list`) as HTMLUListElement;
+
+    // const listItemElements = this.assignedProjects.map((projectItem) => {
+    //   const listItemElement = document.createElement('li');
+    //   listItemElement.textContent = projectItem.title;
+    //   return listItemElement;
+    // });
+
+    // /**
+    //  * innerHTML: 一般較常使用 innerHTML 並將其設為空字串以清除元素底下的所有元素 (此指 listElement.innerHTML = '')
+    //  * replaceChildren: 除 IE 外的瀏覽器皆已支援的新快速清除/覆蓋方法 (不指定覆蓋對象將使其清除底下所有元素，指定覆蓋對象將使其覆蓋底下所有元素)
+    //  * 目的: 重新渲染的初始行為。意即先清除舊有內容再進行渲染 (確保舊有內容不會遺留於元素上)
+    //  */
+    // listElement.replaceChildren(...listItemElements);
   }
 }
 
