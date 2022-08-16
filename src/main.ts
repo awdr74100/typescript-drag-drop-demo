@@ -180,6 +180,13 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
   private project: Project;
 
+  /**
+   * 常見約定為將 getter/setter 添加至字段正下方 (也為建構函式上方)
+   */
+  public get persons() {
+    return `${this.project.people} ${this.project.people === 1 ? 'person' : 'persons'}`;
+  }
+
   constructor(hostElementId: string, project: Project) {
     super('single-project', hostElementId, false, project.id);
 
@@ -193,7 +200,7 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
 
   public renderContent() {
     this.element.querySelector('h2')!.textContent = this.project.title;
-    this.element.querySelector('h3')!.textContent = this.project.people.toString();
+    this.element.querySelector('h3')!.textContent = this.persons + ' assigned';
     this.element.querySelector('p')!.textContent = this.project.description;
   }
 }
