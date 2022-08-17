@@ -27,10 +27,6 @@ class Project {
   ) {}
 }
 
-interface Role<T> {
-  name: T;
-}
-
 // Project State Management
 type Listener<T> = (items: T[]) => void; // 泛型也可用於 type 或 interface (概念同樣為藉由外部傳遞類型來定義類型)
 
