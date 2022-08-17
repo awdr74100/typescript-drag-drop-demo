@@ -1,3 +1,15 @@
+// Drag & Drop Interfaces
+interface Draggable {
+  dragStartHandler(e: DragEvent): void; // DragEvent 與先前 SubmitEvent 同為 TypeScript 內建類型 (由 lib.dom 庫提供支持)
+  dragEndHandler(e: DragEvent): void;
+}
+
+interface DragTarget {
+  dragOverHandler(e: DragEvent): void;
+  dropHandler(e: DragEvent): void;
+  dragLeaveHandler(e: DragEvent): void;
+}
+
 // Project Status Enum
 enum ProjectStatus {
   Active,
@@ -177,7 +189,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 }
 
 // ProjectItem Class
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements Draggable {
   private project: Project;
 
   /**
@@ -196,7 +208,21 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
     this.renderContent();
   }
 
-  public configure() {}
+  @Autobind
+  public dragStartHandler(e: DragEvent) {
+    console.log(e);
+  }
+
+  @Autobind
+  public dragEndHandler(_: DragEvent) {
+    console.log('DargEnd');
+  }
+
+  public configure() {
+    // 記得在欲拖動元素添加 draggable="true" 屬性 (此為 template 中的 li 屬性)
+    this.element.addEventListener('dragstart', this.dragStartHandler);
+    this.element.addEventListener('dragend', this.dragEndHandler);
+  }
 
   public renderContent() {
     this.element.querySelector('h2')!.textContent = this.project.title;
