@@ -228,7 +228,7 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements 
 }
 
 // ProjectList Class
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList extends Component<HTMLDivElement, HTMLElement> implements DragTarget {
   assignedProjects: Project[];
 
   constructor(private type: 'active' | 'finished') {
@@ -244,7 +244,26 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
     this.renderContent();
   }
 
+  /**
+   * 根據實現所必要定義屬性及方法: 確切定義位置及順序將取決於你 (表示不存在限制)
+   */
+  @Autobind
+  public dragOverHandler(_: DragEvent) {
+    this.element.querySelector('ul')!.classList.add('droppable');
+  }
+
+  public dropHandler(_: DragEvent) {}
+
+  @Autobind
+  public dragLeaveHandler(_: DragEvent) {
+    this.element.querySelector('ul')!.classList.remove('droppable');
+  }
+
   public configure() {
+    this.element.addEventListener('dragover', this.dragOverHandler);
+    this.element.addEventListener('drop', this.dropHandler);
+    this.element.addEventListener('dragleave', this.dragLeaveHandler);
+
     /**
      * 註冊偵聽器函式: 傳遞回調給 projectState 進行管理，也表示回調將由 projectState 主動調用才被觸發
      * 觸發偵聽器回調: 由調用 projectState.addProject 方法間接調用回調 (同時接收已更新的項目列表)
