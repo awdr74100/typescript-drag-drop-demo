@@ -206,7 +206,12 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements 
 
   @Autobind
   public dragStartHandler(e: DragEvent) {
-    console.log(e);
+    /**
+     * e.dataTransfer: 為僅存在類型為 DragEvent 的物件中的物件屬性，其中存放拖放過程附加的數據
+     * e.dataTransfer 可能不存在: 並不是所有與拖放相關的事件觸發回調所提供的 DragEvent 類型物件都存在該屬性 (意即將取決於事件類型，而 dragstart 事件確實存在該屬性)
+     */
+    e.dataTransfer!.setData('text/plain', this.project.id); // 僅附加可表示該物件的唯一值而非整個物件將節省記憶體空間 (後續依然可透過唯一值從 ProjectState 找回物件)
+    e.dataTransfer!.effectAllowed = 'move'; // 指定拖動到允許 drop 行為的元素時游標所呈現的效果 (就只是單純的更改不存在於 CSS 而更為直觀的游標樣式)(在 dragstart 以外的事件中設置該屬性將無效)
   }
 
   @Autobind
@@ -248,11 +253,22 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> implements Drag
    * 根據實現所必要定義屬性及方法: 確切定義位置及順序將取決於你 (表示不存在限制)
    */
   @Autobind
-  public dragOverHandler(_: DragEvent) {
+  public dragOverHandler(e: DragEvent) {
+    if (e.dataTransfer?.types[0] !== 'text/plain') return; // 僅允許附加指定格式數據的 drag 行為有能力觸發 drop 事件 (即像是附加圖片等為不同格式數據的 drag 行為都將返回)
+
+    e.preventDefault(); // 取消 dragover 事件的預設處理才能觸發同個偵聽元素的 drop 事件 (否則 drop 事件無法被觸發且游標套用 not-allowed 樣式)
+
     this.element.querySelector('ul')!.classList.add('droppable');
   }
 
-  public dropHandler(_: DragEvent) {}
+  public dropHandler(e: DragEvent) {
+    /**
+     * 保護模式: e.dataTransfer 就如同 e.files 都將只在執行期間填充自身物件，執行結束後將回到使訪問始終為空物件的保護模式
+     * 打印為空: 當物件回到保護模式時將一併清除所有數據，而受到傳址特性影響的打印物件自然為空物件
+     * 有效訪問: 避免直接訪問 e.dataTransfer 物件，而是訪問 e.dataTransfer 內的屬性或方法，將可如預期取得內容 (value)
+     */
+    console.log(e.dataTransfer!.getData('text/plain'));
+  }
 
   @Autobind
   public dragLeaveHandler(_: DragEvent) {
