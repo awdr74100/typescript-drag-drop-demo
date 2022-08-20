@@ -80,6 +80,22 @@ class ProjectState extends State<Project> {
 
     this.projects.push(project);
 
+    this.updateListeners();
+  }
+
+  public moveProject(projectId: string, newStatus: ProjectStatus) {
+    const projectIndex = this.projects.findIndex(({ id }) => id === projectId);
+
+    if (projectIndex === -1) return; // 檢查對象是否存在 (避免更改非目標對象狀態)
+
+    if (this.projects[projectIndex]!.status === newStatus) return; // 檢查狀態是否相同 (避免相同的渲染)
+
+    this.projects[projectIndex]!.status = newStatus;
+
+    this.updateListeners();
+  }
+
+  private updateListeners() {
     this.listeners.forEach((listenerFunc) => {
       listenerFunc([...this.projects]); // 傳送副本陣列而不是原始陣列 (避免傳址特性引發的潛在問題)
     });
@@ -261,13 +277,17 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> implements Drag
     this.element.querySelector('ul')!.classList.add('droppable');
   }
 
+  @Autobind
   public dropHandler(e: DragEvent) {
     /**
      * 保護模式: e.dataTransfer 就如同 e.files 都將只在執行期間填充自身物件，執行結束後將回到使訪問始終為空物件的保護模式
      * 打印為空: 當物件回到保護模式時將一併清除所有數據，而受到傳址特性影響的打印物件自然為空物件
      * 有效訪問: 避免直接訪問 e.dataTransfer 物件，而是訪問 e.dataTransfer 內的屬性或方法，將可如預期取得內容 (value)
      */
-    console.log(e.dataTransfer!.getData('text/plain'));
+    const projectId = e.dataTransfer!.getData('text/plain');
+    const newStatus = this.type === 'active' ? ProjectStatus.Active : ProjectStatus.Finished;
+
+    projectState.moveProject(projectId, newStatus);
   }
 
   @Autobind
