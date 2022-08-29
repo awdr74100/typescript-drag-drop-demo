@@ -1,5 +1,7 @@
+export const something = '...';
+
 // Component Base Class
-export abstract class Component<T extends HTMLElement, U extends HTMLElement> {
+export default abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   templateElement: HTMLTemplateElement; // 當元素不存在特定類型時可分配 HTMLElement 類型 (為所有特定元素類型的基礎通用類型)
   hostElement: T; // 透過泛型來分配動態類型使元素類型可根據子類傳入類型而定義 (約束為 HTMLElement 使泛型仍可獲得元素通用屬性提示)
   element: U;
